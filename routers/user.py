@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from passlib.context import CryptContext
 
 from dependencies import get_db
 from models.model import User
@@ -7,10 +8,24 @@ from models.category import Category
 from schemas.schema import UserCreate, UserUpdate, UserLogin
 from bmi_utils import calculate_bmi
 
+
 router = APIRouter(
     prefix="/users",
     tags=["User"]
 )
+
+
+
+
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+
+def hashing(password: str):
+    return pwd_context.hash(password)
+
+def verification(plain_password: str, hashed_password: str):
+    return pwd_context.verify(plain_password, hashed_password)
+
+
 
 @router.get("/get")
 def get_all_users(db: Session = Depends(get_db)):
@@ -19,6 +34,12 @@ def get_all_users(db: Session = Depends(get_db)):
 
 @router.post("/")
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
+
+    # Check duplicate email
+    existing = db.query(User).filter(User.email == user.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
     bmi = calculate_bmi(user.weight, user.height)
 
     category = db.query(Category).filter(
@@ -32,7 +53,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
         weight=user.weight,
         height=user.height,
         email=user.email,
-        password=user.password,
+        password=hashing(user.password), 
         gender=user.gender,
         bmi=bmi,
         category_id=category.category_id if category else None
@@ -49,14 +70,19 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
         "category_id": new_user.category_id
     }
 
+
 @router.post("/login")
 def login_user(user: UserLogin, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(
-        User.email == user.email,
-        User.password == user.password
-    ).first()
+
+    # Normalize email (avoids case/space issues)
+    email = user.email.strip().lower()
+
+    db_user = db.query(User).filter(User.email == email).first()
 
     if not db_user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    if not verification(user.password, db_user.password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     return {
@@ -67,23 +93,47 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
     }
 
 
+
 @router.put("/{id}")
 def update_user(id: int, user: UserUpdate, db: Session = Depends(get_db)):
+
     existing_user = db.query(User).filter(User.user_id == id).first()
     if not existing_user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    # Update basic fields
     existing_user.name = user.name
     existing_user.age = user.age
     existing_user.weight = user.weight
     existing_user.height = user.height
     existing_user.email = user.email
-    existing_user.password = user.password
     existing_user.gender = user.gender
+
+    # Recalculate BMI & category
+    bmi = calculate_bmi(user.weight, user.height)
+
+    category = db.query(Category).filter(
+        Category.bmi_start <= bmi,
+        Category.bmi_end >= bmi
+    ).first()
+
+    existing_user.bmi = bmi
+    existing_user.category_id = category.category_id if category else None
+
+    # Update password ONLY if provided
+    if user.password:
+        existing_user.password = hashing(user.password)
 
     db.commit()
     db.refresh(existing_user)
-    return existing_user
+
+    # Return safe response
+    return {
+        "user_id": existing_user.user_id,
+        "name": existing_user.name,
+        "email": existing_user.email,
+        "category_id": existing_user.category_id
+    }
 
 
 @router.get("/{id}")
