@@ -18,3 +18,10 @@ class User(Base):
 
     category_id = Column(Integer, ForeignKey("category.category_id"))
     category = relationship("Category")
+
+
+    progress = relationship(
+        "UserProgress",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
