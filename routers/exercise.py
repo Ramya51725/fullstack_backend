@@ -8,7 +8,6 @@ from models.exemodel import Exercise
 from schemas.exeschema import ExerciseResponse, ExerciseUpdate, Focusupdate
 from dependencies import get_db
 
-# ✅ IMPORTANT: this loads YOUR cloudinary.py config
 import cloudinary_config  # <-- name must match your file
 
 router = APIRouter(
