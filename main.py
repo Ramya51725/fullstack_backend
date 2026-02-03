@@ -11,6 +11,8 @@ from routers import progress
 
 
 
+
+
 app = FastAPI()
 
 app.add_middleware(
@@ -35,3 +37,6 @@ Base.metadata.create_all(bind=engine)
 @app.get("/")
 def get_home():
     return {"msg": "Welcome to Fitzy Lift.Sweat.Repeat"}
+
+
+# real code
