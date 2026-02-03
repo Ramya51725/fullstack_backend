@@ -20,6 +20,9 @@ typing_extensions==4.15.0
 uvicorn==0.38.0
 passlib
 argon2-cffi
+cloudinary
+python-multipart
+
 
 
 # real code
