@@ -8,19 +8,17 @@ from models.exemodel import Exercise
 from schemas.exeschema import ExerciseResponse, ExerciseUpdate, Focusupdate
 from dependencies import get_db
 
-import cloudinary_config  # <-- name must match your file
+import cloudinary_config  
 
 router = APIRouter(
     prefix="/exercise",
     tags=["Exercise"]
 )
 
-# ================= GET ALL =================
 @router.get("/")
 def get_all(db: Session = Depends(get_db)):
     return db.query(Exercise).all()
 
-# ================= GET BY ID =================
 @router.get("/{id}")
 def get_exercise_by_id(id: int, db: Session = Depends(get_db)):
     exercise = db.query(Exercise).filter(
