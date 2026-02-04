@@ -15,22 +15,13 @@ router = APIRouter(
     tags=["Exercise"]
 )
 
+# ================= GET ALL =================
 @router.get("/")
 def get_all(db: Session = Depends(get_db)):
     return db.query(Exercise).all()
 
-@router.get("/{id}")
-def get_exercise_by_id(id: int, db: Session = Depends(get_db)):
-    exercise = db.query(Exercise).filter(
-        Exercise.exercise_id == id
-    ).first()
 
-    if not exercise:
-        raise HTTPException(status_code=404, detail="Exercise not found")
-
-    return exercise
-
-# ================= CATEGORY + LEVEL =================
+# ================= CATEGORY + LEVEL (IMPORTANT: KEEP ABOVE /{id}) =================
 @router.get("/by-category-level")
 def get_exercise_by_category_and_level(
     category_id: int,
@@ -41,6 +32,7 @@ def get_exercise_by_category_and_level(
         Exercise.category_id == category_id,
         Exercise.level == level
     ).all()
+
 
 # ================= CREATE =================
 @router.post("/create", response_model=ExerciseResponse)
@@ -57,13 +49,11 @@ async def create_exercise(
 
     db: Session = Depends(get_db)
 ):
-    # 🔹 Upload image
     image_upload = cloudinary.uploader.upload(
         exercise_image.file,
         folder="fitzy/exercises/images"
     )
 
-    # 🔹 Upload video
     video_upload = cloudinary.uploader.upload(
         exercise_video.file,
         resource_type="video",
@@ -73,7 +63,6 @@ async def create_exercise(
     image_url = image_upload["secure_url"]
     video_url = video_upload["secure_url"]
 
-    # 🔹 Parse focus_area
     focus_list = None
     if focus_area:
         try:
@@ -97,6 +86,7 @@ async def create_exercise(
     db.refresh(new_exercise)
 
     return new_exercise
+
 
 # ================= UPDATE =================
 @router.put("/update/{id}")
@@ -125,6 +115,7 @@ def update_exercise(
     db.refresh(ex)
     return ex
 
+
 # ================= DELETE =================
 @router.delete("/delete/{id}")
 def delete_exercise(id: int, db: Session = Depends(get_db)):
@@ -138,6 +129,7 @@ def delete_exercise(id: int, db: Session = Depends(get_db)):
     db.delete(exercise)
     db.commit()
     return {"msg": "Exercise deleted successfully"}
+
 
 # ================= UPDATE FOCUS =================
 @router.patch("/focus/{exercise_id}")
@@ -157,3 +149,20 @@ def update_focus(
     db.commit()
     db.refresh(exercise)
     return exercise
+
+
+# ================= GET BY ID (ALWAYS KEEP LAST) =================
+@router.get("/{id}")
+def get_exercise_by_id(id: int, db: Session = Depends(get_db)):
+    exercise = db.query(Exercise).filter(
+        Exercise.exercise_id == id
+    ).first()
+
+    if not exercise:
+        raise HTTPException(status_code=404, detail="Exercise not found")
+
+    return exercise
+
+
+
+
