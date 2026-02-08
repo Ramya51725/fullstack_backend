@@ -11,8 +11,9 @@ class DietVeg(Base):
     lunch = Column(String)
     dinner = Column(String)
     category_id = Column(Integer, ForeignKey("category.category_id")) 
-    category = relationship("Category")   # foreign key
+    category = relationship("Category")   
 
 
     
 
+    

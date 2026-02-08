@@ -15,7 +15,7 @@ class UserProgress(Base):
         index=True
     )
 
-    day = Column(Integer, nullable=False)   # 1–30
+    day = Column(Integer, nullable=False)  
     status = Column(String(15), default="pending")
     
     updated_at = Column(DateTime(timezone=True), server_default=func.now())

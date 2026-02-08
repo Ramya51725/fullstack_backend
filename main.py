@@ -24,7 +24,6 @@ app.add_middleware(
 )
 
 
-# Include routers
 app.include_router(progress.router)
 app.include_router(user.router)
 app.include_router(diet.router)

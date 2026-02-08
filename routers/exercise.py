@@ -15,13 +15,11 @@ router = APIRouter(
     tags=["Exercise"]
 )
 
-# ================= GET ALL =================
 @router.get("/")
 def get_all(db: Session = Depends(get_db)):
     return db.query(Exercise).all()
 
 
-# ================= CATEGORY + LEVEL (IMPORTANT: KEEP ABOVE /{id}) =================
 @router.get("/by-category-level")
 def get_exercise_by_category_and_level(
     category_id: int,
@@ -34,7 +32,6 @@ def get_exercise_by_category_and_level(
     ).all()
 
 
-# ================= CREATE =================
 @router.post("/create", response_model=ExerciseResponse)
 async def create_exercise(
     level: str = Form(...),
@@ -88,7 +85,6 @@ async def create_exercise(
     return new_exercise
 
 
-# ================= UPDATE =================
 @router.put("/update/{id}")
 def update_exercise(
     id: int,
@@ -116,7 +112,6 @@ def update_exercise(
     return ex
 
 
-# ================= DELETE =================
 @router.delete("/delete/{id}")
 def delete_exercise(id: int, db: Session = Depends(get_db)):
     exercise = db.query(Exercise).filter(
@@ -131,7 +126,6 @@ def delete_exercise(id: int, db: Session = Depends(get_db)):
     return {"msg": "Exercise deleted successfully"}
 
 
-# ================= UPDATE FOCUS =================
 @router.patch("/focus/{exercise_id}")
 def update_focus(
     exercise_id: int,
@@ -151,7 +145,6 @@ def update_focus(
     return exercise
 
 
-# ================= GET BY ID (ALWAYS KEEP LAST) =================
 @router.get("/{id}")
 def get_exercise_by_id(id: int, db: Session = Depends(get_db)):
     exercise = db.query(Exercise).filter(
