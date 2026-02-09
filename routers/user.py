@@ -70,7 +70,6 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     }
 
 
-# 🔐 LOGIN WITH JWT (ONLY REAL CHANGE)
 @router.post("/login")
 def login_user(user: UserLogin, db: Session = Depends(get_db)):
 
