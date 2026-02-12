@@ -8,10 +8,6 @@ from models.category import Category
 from schemas.schema import UserCreate, UserUpdate, UserLogin
 from utils.bmi_utils import calculate_bmi
 
-from utils.jwt_handler import create_access_token  
-from fastapi.security import OAuth2PasswordRequestForm
-
-
 router = APIRouter(
     prefix="/users",
     tags=["User"]
@@ -28,37 +24,35 @@ def verification(plain_password: str, hashed_password: str):
     return pwd_context.verify(plain_password, hashed_password)
 
 
+# ✅ GET ALL USERS
 @router.get("/get")
 def get_all_users(db: Session = Depends(get_db)):
     return db.query(User).all()
 
+
+# ✅ SIMPLE LOGIN (NO JWT)
 @router.post("/login")
-def login_user(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
-    email = form_data.username.strip().lower()
-    password = form_data.password
+def login_user(user: UserLogin, db: Session = Depends(get_db)):
+
+    email = user.email.strip().lower()
 
     db_user = db.query(User).filter(User.email == email).first()
     if not db_user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    if not verification(password, db_user.password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    access_token = create_access_token({
-        "user_id": db_user.user_id,
-        "email": db_user.email
-    })
+    if not verification(user.password, db_user.password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     return {
-        "access_token": access_token,
-        "token_type": "bearer"
+        "message": "Login successful",
+        "user_id": db_user.user_id,
+        "name": db_user.name,
+        "email": db_user.email,
+        "category_id": db_user.category_id
     }
 
 
-
+# ✅ CREATE USER
 @router.post("/")
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
 
@@ -97,33 +91,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     }
 
 
-@router.post("/login")
-def login_user(user: UserLogin, db: Session = Depends(get_db)):
-
-    email = user.email.strip().lower()
-
-    db_user = db.query(User).filter(User.email == email).first()
-    if not db_user:
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-
-    if not verification(user.password, db_user.password):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-
-    access_token = create_access_token({
-        "user_id": db_user.user_id,
-        "email": db_user.email
-    })
-
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user_id": db_user.user_id,
-        "name": db_user.name,
-        "email": db_user.email,
-        "category_id": db_user.category_id
-    }
-
-
+# ✅ UPDATE USER
 @router.put("/{id}")
 def update_user(id: int, user: UserUpdate, db: Session = Depends(get_db)):
 
@@ -162,6 +130,7 @@ def update_user(id: int, user: UserUpdate, db: Session = Depends(get_db)):
     }
 
 
+# ✅ GET USER BY ID
 @router.get("/{id}")
 def get_user_by_id(id: int, db: Session = Depends(get_db)):
 
@@ -190,6 +159,7 @@ def get_user_by_id(id: int, db: Session = Depends(get_db)):
     }
 
 
+# ✅ DELETE USER
 @router.delete("/delete/{id}")
 def delete_user(id: int, db: Session = Depends(get_db)):
 
@@ -201,8 +171,3 @@ def delete_user(id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "User deleted successfully"}
-
-
-
-
-
