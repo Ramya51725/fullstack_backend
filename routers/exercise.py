@@ -46,21 +46,31 @@ async def create_exercise(
 
     db: Session = Depends(get_db)
 ):
-    image_upload = cloudinary.uploader.upload(
-        exercise_image.file,
-        folder="fitzy/exercises/images"
-    )
+    try:
+        # Upload Image
+        image_upload = cloudinary.uploader.upload(
+            exercise_image.file,
+            folder="fitzy/exercises/images"
+        )
 
-    video_upload = cloudinary.uploader.upload(
-        exercise_video.file,
-        resource_type="video",
-        folder="fitzy/exercises/videos"
-    )
+        # Upload Video
+        video_upload = cloudinary.uploader.upload(
+            exercise_video.file,
+            resource_type="video",
+            folder="fitzy/exercises/videos"
+        )
 
-    image_url = image_upload["secure_url"]
-    video_url = video_upload["secure_url"]
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Cloudinary upload failed: {str(e)}"
+        )
 
-    focus_list = None
+    image_url = image_upload.get("secure_url")
+    video_url = video_upload.get("secure_url")
+
+    # Convert focus_area to list
+    focus_list = []
     if focus_area:
         try:
             focus_list = json.loads(focus_area)
@@ -83,7 +93,6 @@ async def create_exercise(
     db.refresh(new_exercise)
 
     return new_exercise
-
 
 @router.put("/update/{id}")
 def update_exercise(

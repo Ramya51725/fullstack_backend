@@ -9,6 +9,7 @@ from schemas.schema import UserCreate, UserUpdate, UserLogin
 from utils.bmi_utils import calculate_bmi
 
 from utils.jwt_handler import create_access_token  
+from fastapi.security import OAuth2PasswordRequestForm
 
 
 router = APIRouter(
@@ -30,6 +31,32 @@ def verification(plain_password: str, hashed_password: str):
 @router.get("/get")
 def get_all_users(db: Session = Depends(get_db)):
     return db.query(User).all()
+
+@router.post("/login")
+def login_user(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
+    email = form_data.username.strip().lower()
+    password = form_data.password
+
+    db_user = db.query(User).filter(User.email == email).first()
+    if not db_user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    if not verification(password, db_user.password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    access_token = create_access_token({
+        "user_id": db_user.user_id,
+        "email": db_user.email
+    })
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer"
+    }
+
 
 
 @router.post("/")
