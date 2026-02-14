@@ -8,6 +8,7 @@ from models.model import User
 from models.nonveg_model import DietNonVeg
 from routers import user, diet, nonveg_diet, exercise,category
 from routers import progress
+from routers import exercise_progress
 
 
 
@@ -23,7 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+app.include_router(exercise_progress.router)
 app.include_router(progress.router)
 app.include_router(user.router)
 app.include_router(diet.router)
@@ -38,4 +39,4 @@ def get_home():
     return {"msg": "Welcome to Fitzy Lift.Sweat.Repeat"}
 
 
-# real code 1
+# real code 
