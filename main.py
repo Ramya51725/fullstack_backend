@@ -11,9 +11,6 @@ from routers import progress
 from routers import exercise_progress
 
 
-
-
-
 app = FastAPI()
 
 app.add_middleware(
@@ -32,7 +29,7 @@ app.include_router(nonveg_diet.router)
 app.include_router(exercise.router)
 app.include_router(category.router)
 
-# Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 def get_home():
