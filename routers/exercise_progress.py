@@ -14,14 +14,8 @@ router = APIRouter(
 )
 
 
-# 🔥 CREATE PROGRESS
 @router.post("/update/{user_id}/{level}/{category_id}")
-def update_progress(
-    user_id: int,
-    level: str,
-    category_id: int,
-    db: Session = Depends(get_db)
-):
+def update_progress(user_id: int, level: str, category_id: int, db: Session = Depends(get_db)):
 
     progress = db.query(ExerciseProgress).filter(
         ExerciseProgress.user_id == user_id,
@@ -32,10 +26,7 @@ def update_progress(
     if not progress:
         raise HTTPException(status_code=404, detail="Progress not found")
 
-    # 🔥 Set completed exercises to 6
-    progress.completed_exercises = 6
-
-    # 🔥 Move to next day
+    progress.completed_exercises = 6  # ✅ default 6
     progress.current_day += 1
     progress.completed_days += 1
 
@@ -46,15 +37,12 @@ def update_progress(
     if progress.current_week > 4:
         progress.current_week = 1
         progress.current_month += 1
-        progress.is_month_completed = True
-
-    if progress.current_month > 8:
-        progress.is_level_completed = True
 
     db.commit()
     db.refresh(progress)
 
     return progress
+
 
 
 
