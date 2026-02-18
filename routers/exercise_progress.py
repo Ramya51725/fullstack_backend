@@ -15,24 +15,47 @@ router = APIRouter(
 
 
 # 🔥 CREATE PROGRESS
-@router.post("/create", response_model=ProgressResponse)
-def create_progress(progress: ProgressCreate, db: Session = Depends(get_db)):
+@router.post("/update/{user_id}/{level}/{category_id}")
+def update_progress(
+    user_id: int,
+    level: str,
+    category_id: int,
+    db: Session = Depends(get_db)
+):
 
-    existing = db.query(ExerciseProgress).filter(
-        ExerciseProgress.user_id == progress.user_id,
-        ExerciseProgress.level == progress.level
+    progress = db.query(ExerciseProgress).filter(
+        ExerciseProgress.user_id == user_id,
+        ExerciseProgress.level == level,
+        ExerciseProgress.category_id == category_id
     ).first()
 
-    if existing:
-        raise HTTPException(status_code=400, detail="Progress already exists")
+    if not progress:
+        raise HTTPException(status_code=404, detail="Progress not found")
 
-    new_progress = ExerciseProgress(**progress.dict())
+    # 🔥 Set completed exercises to 6
+    progress.completed_exercises = 6
 
-    db.add(new_progress)
+    # 🔥 Move to next day
+    progress.current_day += 1
+    progress.completed_days += 1
+
+    if progress.current_day > 7:
+        progress.current_day = 1
+        progress.current_week += 1
+
+    if progress.current_week > 4:
+        progress.current_week = 1
+        progress.current_month += 1
+        progress.is_month_completed = True
+
+    if progress.current_month > 8:
+        progress.is_level_completed = True
+
     db.commit()
-    db.refresh(new_progress)
+    db.refresh(progress)
 
-    return new_progress
+    return progress
+
 
 
 # 🔥 GET PROGRESS
